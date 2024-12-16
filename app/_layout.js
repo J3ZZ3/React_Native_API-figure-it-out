@@ -1,59 +1,35 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
-import { Image, ImageBackground } from "react-native";
+import { Image, ImageBackground, View, Text } from "react-native";
+import * as Location from 'expo-location';
+import { useState, useEffect } from 'react';
 
 export default function Layout() {
+
+  const [location, setLocation] = useState('');
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      console.error('Permission to access location was denied');
+    }
+    let location = await Location.getCurrentPositionAsync({});
+    setLocation(location);
+  }
+  useEffect(() => {
+    console.log({location: location});
+    
+  }, [location]);
+  
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer
-        screenOptions={{
-          drawerPosition: "left",
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: "#FF3131",
-            height: 100,
-          },
-          drawerStyle: {
-            backgroundColor: "#000000",
-            width: 200,
-          },
-          drawerActiveBackgroundColor: "#FF3131",
-          drawerInactiveBackgroundColor: "#000000",
-          drawerActiveTintColor: "white",
-          drawerInactiveTintColor: "#BDBDBD",
-        }}
-      >
-        <Drawer.Screen
-          name="index"
-          options={{
-            drawerLabel: "Login",
-            drawerIcon: () => <Image style={{ width: 20, height: 20 }} source={require("../assets/images/login.png")} />,
-            title: "Sign In",
-          }}
-        />  
-        <Drawer.Screen
-          name="Registration"
-          options={{
-            drawerLabel: "Registration",
-            drawerIcon: () => <Image style={{ width: 20, height: 20 }} source={require("../assets/images/registration.png")} />,
-            title: "Register",
-          }}
-        />
-        <Drawer.Screen
-          name="users/[id]"
-          options={{
-            drawerLabel: "User Details"
-          }}
-        />
-        <Drawer.Screen
-          name="users/index"
-          options={{
-            drawerLabel: "Users List",
-            title: "Users List",
-          }}
-        />
-        
-      </Drawer>
+      <View>
+        <Text>Hello</Text>
+      </View>
     </GestureHandlerRootView>
   );
 }
