@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Gallery = () => {
-  const [recordings, setRecordings] = useState([]);
+  const [media, setMedia] = useState([]);
 
   useEffect(() => {
-    loadRecordings();
+    loadMedia();
   }, []);
 
-  const loadRecordings = async () => {
+  const loadMedia = async () => {
     try {
-      const existingRecordings = await AsyncStorage.getItem('recordings');
-      if (existingRecordings) {
-        setRecordings(JSON.parse(existingRecordings));
+      const existingMedia = await AsyncStorage.getItem('media');
+      if (existingMedia) {
+        setMedia(JSON.parse(existingMedia));
       }
     } catch (error) {
-      console.error("Error loading recordings:", error);
+      console.error("Error loading media:", error);
     }
   };
 
@@ -25,17 +25,27 @@ const Gallery = () => {
     Alert.alert("Playing video from:", uri);
   };
 
+  const renderItem = ({ item }) => {
+    if (item.type === 'photo') {
+      return <Image source={{ uri: item.uri }} style={styles.image} />;
+    } else if (item.type === 'video') {
+      return (
+        <TouchableOpacity onPress={() => playRecording(item.uri)}>
+          <Text style={styles.videoItem}>{item.uri}</Text>
+        </TouchableOpacity>
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Video Recordings</Text>
+      <Text style={styles.title}>Media Gallery</Text>
       <FlatList
-        data={recordings}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => playRecording(item)}>
-            <Text style={styles.item}>{item}</Text>
-          </TouchableOpacity>
-        )}
+        data={media}
+        keyExtractor={(item) => item.uri}
+        renderItem={renderItem}
+        numColumns={2} // Display items in 2 columns
+        columnWrapperStyle={styles.row} // Style for the row
       />
     </View>
   );
@@ -52,10 +62,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  item: {
+  image: {
+    width: '100%',
+    height: 200,
+    marginBottom: 10,
+  },
+  videoItem: {
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
+  },
+  row: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
 });
 

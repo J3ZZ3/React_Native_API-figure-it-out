@@ -4,52 +4,55 @@ import { Button, StyleSheet, Text, Pressable, View, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location'; // Import Location API
+import { insertMedia } from './Database'; // Import the database functions
 
-export default function Camera() {
+export default function Camera({ onMediaSaved }) {
   const navigation = useNavigation();
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const [audioPermission, requestAudioPermission] = useMicrophonePermissions();
   const camera = useRef(null);
 
   // Check if permission is still loading
-  if (permission === null || audioPermission === null) {
+  if (permission === null) {
     return <View />; // or a loading indicator
   }
 
   // Check if permission is granted
-  if (!permission.granted || !audioPermission?.granted) {
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>We need your permission to show the camera</Text>
         <Button onPress={requestPermission} title="Grant Permission" />
-        <Text style={styles.message}>We need your permission to record audio</Text>
-        <Button onPress={requestAudioPermission} title="Grant Permission" />
       </View>
     );
   }
-
-  const takePicture = async () => {
+   const takePicture = async () => {
     if (camera.current) {
       const photo = await camera.current.takePictureAsync();
-      await saveMedia(photo.uri, 'photo');
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        const metadata = {
+          timestamp: new Date().toISOString(),
+          geolocation: {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+          uri: photo.uri,
+        };
+        await saveMedia(metadata); // Save metadata along with the image
+        onMediaSaved(); // Notify that media has been saved
+      } else {
+        Alert.alert("Permission to access location was denied");
+      }
     }
   };
-
-  const recordVideo = async () => {
-    if (camera.current) {
-      const video = await camera.current.recordAsync();
-      await saveMedia(video.uri, 'video');
-    }
-  };
-
-  const saveMedia = async (uri, type) => {
+   
+   const saveMedia = async (metadata) => {
     try {
-      const existingMedia = await AsyncStorage.getItem('media');
-      const media = existingMedia ? JSON.parse(existingMedia) : [];
-      media.push({ uri, type });
-      await AsyncStorage.setItem('media', JSON.stringify(media));
-      Alert.alert(`${type.charAt(0).toUpperCase() + type.slice(1)} saved!`);
+      await insertMedia(metadata.uri, metadata.timestamp, metadata.geolocation.latitude, metadata.geolocation.longitude);
+      Alert.alert("Photo saved!", `Location: ${metadata.geolocation.latitude}, ${metadata.geolocation.longitude}`);
     } catch (error) {
       console.error("Error saving media:", error);
     }
@@ -68,11 +71,11 @@ export default function Camera() {
           </Pressable>
           <Pressable 
             style={styles.captureButton} 
-            onPress={takePicture} 
-            onLongPress={recordVideo} 
-            delayLongPress={500} // Optional: Adjust the delay for long press
+            onPress={takePicture}
           >
-            <View style={styles.capture} />
+            <View style={styles.capture}>
+              <Ionicons name="camera" size={60} color="white" />
+            </View>
           </Pressable>
           <Pressable style={styles.galleryButton} onPress={openGallery}>
             <Ionicons name="images" size={60} color="white" />
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     margin: 20,
+    top: 680,
   },
   button: {
     alignItems: 'center',
@@ -110,12 +114,8 @@ const styles = StyleSheet.create({
     marginLeft: 20, // Add some space between buttons
   },
   capture: {
-    borderColor: 'white',
-    backgroundColor: 'red',
-    borderWidth: 3,
-    borderRadius: 30,
-    width: 60,
-    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     fontSize: 24,
