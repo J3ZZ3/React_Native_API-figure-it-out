@@ -41,6 +41,16 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
         const sendPic = () => {
           
         }
+
+        const takeVideo = async() => {
+            const options = {
+                
+            }
+            const vid = await camera.current.recordAsync({})
+            if (vid) {
+                console.log({vid: vid});
+            }
+        }
         if (picture) {
           return (
             <View style={styles.imgCont}>
@@ -107,6 +117,7 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
         },
         capture: {
             borderColor: 'white',
+            backgroundColor: 'red',
             borderWidth: 3,
             borderRadius: 30,
             width: 60,
@@ -127,7 +138,7 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
             position: 'absolute',
             right: 0,
             bottom: 20,
-            backgroundColor: '#grey',
+            backgroundColor: 'grey',
             height: 60,
             width: 60,
             borderRadius: 30,
