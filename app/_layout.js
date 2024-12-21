@@ -1,8 +1,9 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
-import { Image, ImageBackground, View, Text } from "react-native";
+import { Image, ImageBackground, View, Text, SafeAreaView } from "react-native";
 import * as Location from 'expo-location';
 import { useState, useEffect } from 'react';
+import CameraComponent from "../components/CameraComponent";
 
 export default function Layout() {
 
@@ -26,10 +27,8 @@ export default function Layout() {
   }, [location]);
   
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View>
-        <Text>Hello</Text>
-      </View>
-    </GestureHandlerRootView>
+    <SafeAreaView style={{ flex: 1 }}>
+    <CameraComponent/>
+    </SafeAreaView>
   );
 }
